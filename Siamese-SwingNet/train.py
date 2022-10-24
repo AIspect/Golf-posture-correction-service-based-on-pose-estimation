@@ -1,11 +1,72 @@
 from dataloader import GolfDB, Normalize, ToTensor
-from model import EventDetector
+from model import EventDetector, SiameseNetwork
 from util import *
 import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms
 import os
+import random
 
+class Dataset(object):
+    
+    def __init__(self, x0, x1, label):
+        self.size = label.shape[0]
+        self.x0 = torch.from_numpy(x0)
+        self.x1 = torch.from_numpy(x1)
+        self.label = torch.from_numpy(label)
+
+    def __getitem__(self, index):
+        return (self.x0[index],
+                self.x1[index],
+                self.label[index])
+
+    def __len__(self):
+        return self.size
+
+
+def create_pairs(data, digit_indices):
+    x0_data = []
+    x1_data = []
+    label = []
+
+    n = min([len(digit_indices[d]) for d in range(10)]) - 1
+    for d in range(10):
+        # make n pairs with each number
+        for i in range(n):
+            # make pairs of the same class
+            # label is 1
+            z1, z2 = digit_indices[d][i], digit_indices[d][i + 1]
+            # scale data to 0-1
+            # XXX this does ToTensor also
+            x0_data.append(data[z1] / 255.0)
+            x1_data.append(data[z2] / 255.0)
+            label.append(1)
+
+            # make pairs of different classes
+            # since the minimum value is 1, it is not the same class
+            # label is 0
+            inc = random.randrange(1, 10)
+            dn = (d + inc) % 10
+            z1, z2 = digit_indices[d][i], digit_indices[dn][i]
+            # scale data to 0-1
+            # XXX this does ToTensor also
+            x0_data.append(data[z1] / 255.0)
+            x1_data.append(data[z2] / 255.0)
+            label.append(0)
+
+    x0_data = np.array(x0_data, dtype=np.float32)
+    x0_data = x0_data.reshape([-1, 1, 28, 28])
+    x1_data = np.array(x1_data, dtype=np.float32)
+    x1_data = x1_data.reshape([-1, 1, 28, 28])
+    label = np.array(label, dtype=np.int32)
+    return x0_data, x1_data, label
+
+
+def create_iterator(data, label, batchsize, shuffle=False):
+    digit_indices = [np.where(label == i)[0] for i in range(10)]
+    x0, x1, label = create_pairs(data, digit_indices)
+    ret = Dataset(x0, x1, label)
+    return ret
 
 if __name__ == '__main__':
 
@@ -34,6 +95,11 @@ if __name__ == '__main__':
                      transform=transforms.Compose([ToTensor(),
                                                    Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]),
                      train=True)
+
+    train_iter = create_iterator(
+        dataset.train_data.numpy(),
+        dataset.train_labels.numpy(),
+        bs)
 
     data_loader = DataLoader(dataset,
                              batch_size=bs,
