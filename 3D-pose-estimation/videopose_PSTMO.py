@@ -196,13 +196,10 @@ def inference_video(video_path, detector_2d):
     with Timer(video_path):
         main(args)
 
-
 if __name__ == '__main__':
-    # inference_video('outputs/test.mp4', 'alpha_pose')
-    VIDEO_ROOT = "./outputs/first_143"
-    files_list = os.listdir(VIDEO_ROOT)
-    for idx in range(56, len(files_list)):
-        f = files_list[idx]
-        print(f)
-        video_path = os.path.join(VIDEO_ROOT, f)
-        inference_video(video_path, 'alpha_pose')
+    INPUT_VIDEO_PATH = 'put your path';
+    for (root, dir, files) in os.walk(pathlib.WindowsPath('{INPUT_VIDEO_PATH}')):
+        for file in files:
+            if file.title().endswith(".Mp4") and 'alpha' not in file.title():
+                video_path = os.path.join(root, file)
+                inference_video(video_path, 'alpha_pose')
