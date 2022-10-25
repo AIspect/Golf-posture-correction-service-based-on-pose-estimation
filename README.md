@@ -5,3 +5,13 @@ This repository contains source codes from
 - [MoviNet](https://github.com/Atze00/MoViNet-pytorch) 
 - [SwingNet](https://github.com/wmcnally/golfdb)
 - [P-STMO](https://github.com/paTRICK-swk/P-STMO)
+
+
+
+Contributors 
+
+- Seyoung9304
+
+- joft-ware
+
+- cyw320712
